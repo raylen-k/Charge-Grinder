@@ -67,9 +67,9 @@ def dungeon_start():
         lambda: time.sleep(0.2),
 
         lambda: now_click.button(f"giftSearch{'On' if not p.HOS_MODE else ''}"),
-        ClickAction(p.GIFTS[0]["checks"][2], ver="gifts!"),
-        lambda: ClickAction((1239, 395), ver="selected!").execute(try_click) if (p.BUFF[3] or p.GIFTS[0]['checks'][5] == 0) else None,
-        lambda: ClickAction((1239, 549), ver="selected!").execute(try_click) if (p.BUFF[3] or p.GIFTS[0]['checks'][5] == 1) else None,
+        ClickAction((p.GIFT_SEARCH or p.GIFTS[0])["checks"][2], ver="gifts!"),
+        lambda: ClickAction((1239, 395), ver="selected!").execute(try_click) if (p.BUFF[3] or (p.GIFT_SEARCH or p.GIFTS[0])['checks'][5] == 0) else None,
+        lambda: ClickAction((1239, 549), ver="selected!").execute(try_click) if (p.BUFF[3] or (p.GIFT_SEARCH or p.GIFTS[0])['checks'][5] == 1) else None,
         lambda: ClickAction((1239, 703), ver="selected!").execute(try_click) if p.BUFF[9] else None,
         ClickAction((1624, 882)),
     ]
@@ -357,6 +357,7 @@ def set_team(team, teams, keywordless):
     p.PICK = generate_packs_pr(teams[team]["priority"])
     p.IGNORE = generate_packs_av(teams[team]["avoid"])
     p.PICK_ALL = generate_packs_all(teams[team]["priority"])
+    p.GIFT_SEARCH = None
     if p.RABBIT_HOLE: rabbit_hole.configure(p)
     print(p.PICK, p.IGNORE, p.PICK_ALL)
 

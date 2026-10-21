@@ -17,6 +17,7 @@ def make_params(hard=False, **kw):
     base = dict(
         RABBIT_HOLE=True, HARD=hard, BASE_HARD=hard, LVL=1, BUFF=[1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
         SELECTED=["YISANG", "FAUST", "DONQUIXOTE"],
+        GIFTS=[{"checks": ["Burn", "smallBurn", (315, 370), "reBurn", "bigBurn", 0]}], GIFT_SEARCH=None,
         PICK={f"floor{i}": ["TheOutcast"] for i in range(1, 6)},
         PICK_ALL={f"floor{i}": ["TheOutcast", "AutomatedFactory"] for i in range(1, 6)},
         IGNORE={f"floor{i}": ["HellsChicken", "TheUnloving"] for i in range(1, 6)},
@@ -135,6 +136,80 @@ class ConfigureTests(unittest.TestCase):
         for hard in (False, True):
             for pack in rh.route(hard).values():
                 self.assertIn(pack, PACKS)
+
+
+def fake_paths(*extra):
+    """Icons that ship with the bot + the ones a user would add."""
+    from source.utils.paths import PTH
+    return {**PTH, **{name: f"{name}.png" for name in extra}}
+
+
+class GiftTests(unittest.TestCase):
+    ALL = ("fragmentofconceit", "fragmentofdecay", "tornbandolier", "puncturedmemory", "sharpneedlethread")
+
+    def test_fusing_floors(self):
+        self.assertEqual([l for l in range(1, 6) if rh.should_fuse(l, False)], [3, 4])
+        self.assertEqual([l for l in range(1, 6) if rh.should_fuse(l, True)], [2, 3, 4])
+
+    def test_without_new_icons_only_shipped_gifts_are_used(self):
+        tables = rh.gift_tables(False, fake_paths())
+        self.assertEqual([t["checks"][0] for t in tables], ["Poise", "Sinking"])
+        self.assertEqual(list(tables[0]["uptie2"]), ["clearmirror"])
+        self.assertEqual(list(tables[1]["uptie2"]), ["artisticsense"])
+        self.assertEqual(tables[0]["uptie1"], {})
+
+    def test_full_mdn_tables(self):
+        poise, sinking = rh.gift_tables(False, fake_paths(*self.ALL))
+        self.assertEqual(list(poise["uptie2"]), ["fragmentofconceit", "clearmirror"])  # Conceit is fused first
+        self.assertEqual(poise["fuse_ex"], {"clearmirror": 4})
+        self.assertEqual(poise["uptie1"], {"tornbandolier": 2})
+        self.assertEqual(poise["skip_uptie"], ("fragmentofconceit",))
+        self.assertEqual(list(sinking["uptie2"]), ["fragmentofdecay", "artisticsense"])
+        self.assertEqual(sinking["skip_uptie"], ("fragmentofdecay",))
+        for t in (poise, sinking):
+            self.assertEqual((t["goal"], t["fuse2"], t["fuse4"], t["sin"]), ([], {}, {}, True))
+
+    def test_full_mdh_adds_pierce_and_skips_bandolier_upgrade(self):
+        poise, sinking, pierce = rh.gift_tables(True, fake_paths(*self.ALL))
+        self.assertEqual(poise["uptie1"], {})
+        self.assertEqual(pierce["checks"][0], "Pierce")
+        self.assertEqual(list(pierce["uptie2"]), ["puncturedmemory"])
+        self.assertEqual(pierce["skip_uptie"], ("puncturedmemory",))
+
+    def test_pierce_dropped_until_its_icon_exists(self):
+        self.assertEqual(len(rh.gift_tables(True, fake_paths())), 2)
+        self.assertEqual(len(rh.gift_tables(True, fake_paths("puncturedmemory"))), 3)
+
+    def test_every_listed_gift_has_an_icon_when_present(self):
+        for hard in (False, True):
+            for t in rh.gift_tables(hard, fake_paths(*self.ALL)):
+                for key in ("buy", "all"):
+                    for name in t[key]:
+                        self.assertIn(name, fake_paths(*self.ALL), name)
+
+    def test_strategy_gifts_are_protected_from_fusing(self):
+        poise = rh.gift_tables(False, fake_paths(*self.ALL))[0]
+        for name in ("grandwelcome", "sharpneedlethread", "holder", "stonetomb"):
+            self.assertIn(name, poise["all"])
+        self.assertNotIn("grandwelcome", poise["buy"])  # we only protect it, never buy duplicates
+
+    def test_base_team_tables_are_not_mutated(self):
+        from source.teams import TEAMS
+        before = repr(TEAMS["POISE"])
+        rh.gift_tables(False, fake_paths(*self.ALL))
+        self.assertEqual(repr(TEAMS["POISE"]), before)
+
+    def test_missing_icon_report(self):
+        self.assertEqual(rh.missing_gift_icons(fake_paths(*self.ALL)), [])
+        self.assertIn("puncturedmemory", rh.missing_gift_icons(fake_paths(), hard=True))
+        self.assertNotIn("puncturedmemory", rh.missing_gift_icons(fake_paths(), hard=False))
+
+    def test_configure_swaps_gifts_but_keeps_the_gift_search_keyword(self):
+        p = make_params()
+        original = p.GIFTS[0]
+        rh.configure(p)
+        self.assertIs(p.GIFT_SEARCH, original)
+        self.assertEqual(p.GIFTS[0]["checks"][0], "Poise")
 
 
 if __name__ == "__main__":

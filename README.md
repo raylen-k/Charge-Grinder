@@ -161,9 +161,26 @@
   - Heals before leaving the floor 4 and 5 shops so Faust does not corrode.
   - Recommended graces: **1 3** (+ **4** on Hard) and two Gift Searches. The bot warns in `game.log` if 1/3/4 are missing.
 
-  **Not automated yet:** strategy-specific gift buying/fusing (Torn Bandolier, Fragment of Conceit/Decay, Sharp Needle & Thread,
-  Punctured Memory... the bot uses the normal affinity gift logic, so pick a Poise/Sinking team), extra meatshield sinners on
-  Hard floor 4 / Faelantern, healing a skill checker on floor 1 and retrying a failed floor 4 boss turn-2 kill.
+  **Gifts.** The shop logic chases the strategy's gifts with the normal buy/fuse engine: Fragment of Conceit and Clear Mirror,
+  Calm Water (Poise), Fragment of Decay and Artistic Sense (Sinking), plus Punctured Memory (Pierce) on Hard. Only Clear Mirror and
+  Artistic Sense get upgraded (the Fragments stay unupgraded, Torn Bandolier is upgraded on floor 1 of MDN+RR). Fusing happens in the
+  floor 3-4 shops (floor 2-4 on Hard); earlier shops only buy gifts you need and a visible tier 3. Grand Welcome and
+  Sharp Needle & Thread are protected from being fused or sold.
+
+  **Icons you need to add.** The bot recognises gifts by screenshot, and a gift without an icon is skipped (and, if you own it, can be
+  fused or sold). Save a cropped inventory icon, same size/style as the others (about 90x90), as `<name>.png` anywhere under
+  `ImageAssets/UI` (the other gifts live in `ImageAssets/UI/teams/<Keyword>/gifts/`; names must be unique):
+
+  | File name | Gift |
+  |---|---|
+  | `fragmentofconceit.png` | Fragment of Conceit |
+  | `fragmentofdecay.png` | Fragment of Decay |
+  | `tornbandolier.png` | Torn Bandolier (MDN+RR starting gift) |
+  | `puncturedmemory.png` | Punctured Memory (Hard floor 4) |
+  | `sharpneedlethread.png` | Sharp Needle & Thread (protection only) |
+
+  **Not automated:** the shop's free refresh, extra meatshield sinners on Hard floor 4 / Faelantern, healing a skill checker on
+  floor 1, the two Gift Searches, and retrying a failed floor 4 boss turn-2 kill.
   The strategy logic lives in `source/rabbit_hole.py`; run its tests with `python -m unittest discover -s tests -v`.
 
 - ## Fuses EGO gifts

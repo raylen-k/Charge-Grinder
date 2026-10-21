@@ -167,6 +167,7 @@ def inventory_check(reg, h, uptie_det=True):
     for i in range(len(p.GIFTS)):
         if p.GIFTS[i]["sin"]:
             uptie_ego = p.GIFTS[i]["uptie1"] | p.GIFTS[i]["uptie2"] | (p.GIFTS[i]["uptie3"] if i != 0 else {})
+            uptie_ego = {k: v for k, v in uptie_ego.items() if k not in p.GIFTS[i].get("skip_uptie", ())}
         else:
             uptie_ego = {}
 
@@ -417,9 +418,10 @@ def fuse_search(have):
     advanced_fusing = []
     if p.HOS_MODE: return []
 
-    if p.GIFTS[0]["sin"] and not p.GIFTS[0]["goal"][0] in have.keys():
+    first = p.GIFTS[0]
+    if first["sin"] and first.get("fuse2") and not first["goal"][0] in have.keys():
         advanced_fusing.append((0, search_have(have, 1, 0), 1))
-    if p.HARD and p.GIFTS[0]["sin"] and not p.GIFTS[0]["goal"][1] in have.keys():
+    if p.HARD and first["sin"] and first.get("fuse4") and len(first["goal"]) > 1 and not first["goal"][1] in have.keys():
         advanced_fusing.append((0, search_have(have, 3, 0), 3))
     advanced_fusing.sort(key=lambda item: (item[1], item[0]))
     return advanced_fusing
@@ -654,7 +656,8 @@ def fuse_loop():
         if p.TO_UPTIE:
             enhance(p.TO_UPTIE)
 
-        buy_some(2 + 2*(p.LVL < 11))
+        if not p.RABBIT_HOLE: # the build is complete, don't hoard affinity gifts with paid rerolls
+            buy_some(2 + 2*(p.LVL < 11))
 
 
 ### EGO gift enhance logic
@@ -1010,6 +1013,14 @@ def buy_skill3():
     connection()
 
 
+def rabbit_t3():
+    """Rabbit Hole: buy a tier 3 gift if the shop shows one. No refresh, the guide wants the cost saved."""
+    try:
+        buy({3: 1})
+    except RuntimeError:
+        handle_fuckup()
+
+
 def revive_idiots():
     revivals = min(p.DEAD, balance()//100)
     if revivals < 1: return
@@ -1084,8 +1095,13 @@ def shop():
         if not loc_shop.button("+", "fuse_shelf", conf=0.95):
             # we really are on the first floor
             try:
-                enhance(p.GIFTS[0]["uptie1"], floor1=True)
-                buy_loop({3: 2}, floor1=True)
+                if p.RABBIT_HOLE:
+                    if p.GIFTS[0]["uptie1"]: enhance(p.GIFTS[0]["uptie1"], floor1=True)
+                    else: close_panel()
+                    rabbit_t3()
+                else:
+                    enhance(p.GIFTS[0]["uptie1"], floor1=True)
+                    buy_loop({3: 2}, floor1=True)
             except RuntimeError:
                 handle_fuckup()
         else:
@@ -1094,7 +1110,10 @@ def shop():
             close_panel()
     if 5 + p.EXTREME*11 > p.LVL > 1 or not p.SKIP:
         buy_some(rerolls=0, priority=True)
-        fuse_loop()
+        if not p.RABBIT_HOLE or rabbit_hole.should_fuse(p.LVL, p.BASE_HARD):
+            fuse_loop()
+        else:
+            rabbit_t3()
 
     if p.EXTREME:
         win_click(1489, 177, tsize=(180, 53))

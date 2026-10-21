@@ -15,14 +15,19 @@ Summary of the strategy (MDN+RR route, Hard MD differences in brackets):
   * Floors 4-5 shop: heal Faust to 45 SP so she does not corrode.
   * Recommended graces: 1 3 (+ 4 on full MDH) and two Gift Searches.
 
+Gifts: the bot's fuse/buy engine chases one target T4 gift per keyword (Poise: Fragment of Conceit and
+  Clear Mirror, Calm Water; Sinking: Fragment of Decay and Artistic Sense; Hard also Pierce: Punctured Memory)
+  and upgrades only the ones the guide upgrades. Each gift is only handled if its icon exists (GIFT_ICONS).
+
 Not automated (needs game knowledge the bot cannot read from the screen):
-  fusing/buying the strategy-specific gifts (see GIFT_ICONS), extra sinners as meatshields on
-  the Hard Floor 4 boss / Faelantern, healing a "Skill Checker" on floor 1, and retrying a failed
-  Floor 4 boss turn-2 kill.
+  the shop's free refresh, extra sinners as meatshields on the Hard Floor 4 boss / Faelantern, healing a
+  "Skill Checker" on floor 1, the two Gift Searches, and retrying a failed Floor 4 boss turn-2 kill.
 """
 import logging
+from copy import deepcopy
 
-from source.utils.paths import PACKS
+from source.teams import TEAMS, HARD as HARD_TEAMS
+from source.utils.paths import PACKS, PTH
 
 # Pack names as they appear in source/utils/paths.py (PACKS)
 ROUTE_MDN = {
@@ -40,13 +45,19 @@ GRACES = {False: (1, 3), True: (1, 3, 4)}   # 1-based grace numbers, keyed by "i
 HEAL_FLOORS = (4, 5)           # heal Faust to 45 SP in these shops
 FLOORS = range(1, 6)
 
-# Icons the strategy-specific gift handling would need (none of them ship with the bot yet).
-# Drop a cropped screenshot with this name anywhere under ImageAssets/UI to make it available
-# to future gift logic. See missing_gift_icons().
-GIFT_ICONS = [
-    "tornbandolier", "fragmentofconceit", "fragmentofdecay", "sinkingrock",
-    "sharpneedlethread", "puncturedmemory", "fragmentoffriction",
-]
+# Icons the gift handling needs. None of them ship with the bot: add a cropped inventory icon named
+# <name>.png anywhere under ImageAssets/UI (names must be unique; ImageAssets/UI/teams/<Keyword>/gifts/
+# is where the other gifts live). Gifts without an icon are simply skipped.
+#   name                 gift                                   used for
+GIFT_ICONS = {
+    "fragmentofconceit":  "Fragment of Conceit (Poise, T4)",    # fuse target, not upgraded
+    "fragmentofdecay":    "Fragment of Decay (Sinking, T4)",    # fuse target, not upgraded
+    "tornbandolier":      "Torn Bandolier (Pierce, T2)",        # MDN starting gift, upgraded on floor 1
+    "puncturedmemory":    "Punctured Memory (Pierce, T4)",      # Hard floor 4 fuse target, not upgraded
+    "sharpneedlethread":  "Sharp Needle & Thread (T3)",         # only protected from fusing/selling
+}
+HARD_ONLY_ICONS = {"puncturedmemory"}
+FUSE_FLOORS = (3, 4)           # floors where the strategy fuses; Hard also fuses on floor 2
 
 
 def route(hard):
@@ -105,8 +116,58 @@ def missing_graces(buff, hard):
     return [g for g in GRACES[bool(hard)] if not (len(buff) >= g and buff[g - 1])]
 
 
-def missing_gift_icons(paths):
-    return [name for name in GIFT_ICONS if name not in paths]
+def missing_gift_icons(paths, hard=False):
+    return [name for name in GIFT_ICONS
+            if name not in paths and (hard or name not in HARD_ONLY_ICONS)]
+
+
+def should_fuse(lvl, hard):
+    """Shops where fusing is worth the time. The guide postpones it on the early floors."""
+    return lvl in FUSE_FLOORS or (hard and lvl == 2)
+
+
+def gift_tables(hard, paths=PTH):
+    """Gift tables (same shape as source/teams.py entries) for the Rabbit Hole build.
+
+    The bot's engine fuses a random T4 of a keyword until the first `uptie2` gift shows up, then
+    keeps fusing for every `fuse_ex` gift. Order here = Conceit, Decay, [Punctured Memory], then
+    Clear Mirror and Artistic Sense (the ones that get upgraded). Gifts whose icon is missing are left
+    out; a keyword whose target gift can't be recognised is dropped entirely, otherwise the bot
+    would fuse forever.
+    """
+    src = HARD_TEAMS if hard else TEAMS
+
+    def table(keyword, first, upgraded, protect=(), buy=None, uptie1=None):
+        names = [n for n in first + upgraded if n in paths]
+        if not names:
+            return None
+        t = deepcopy(src[keyword])
+        targets = [n for n in first if n in paths]
+        up = [n for n in upgraded if n in paths]
+        t.update(
+            floors=[],
+            uptie1={n: 2 for n in (uptie1 or []) if n in paths},
+            uptie2={n: 4 for n in targets + up},        # first key = what the engine fuses for first
+            uptie3={},
+            goal=[], fuse1={}, fuse2={}, fuse3={}, fuse4={},   # no recipe fusing
+            fuse_ex={n: 4 for n in up},
+            skip_uptie=tuple(targets),                    # guide: Fragments/Punctured Memory stay "IV -"
+            buy=[n for n in (buy if buy is not None else names) if n in paths],
+            all=[n for n in list(protect) + names if n in paths],
+            sin=True,
+        )
+        return t
+
+    tables = [
+        table("POISE", ["fragmentofconceit"], ["clearmirror"],
+              protect=["holder", "stonetomb", "tornbandolier", "grandwelcome", "sharpneedlethread"],
+              buy=["fragmentofconceit", "clearmirror"],
+              uptie1=[] if hard else ["tornbandolier"]),
+        table("SINKING", ["fragmentofdecay"], ["artisticsense"]),
+    ]
+    if hard:
+        tables.append(table("PIERCE", ["puncturedmemory"], []))
+    return [t for t in tables if t]
 
 
 def pack_tables(hard, user_pick_all=None, user_ignore=None):
@@ -142,6 +203,11 @@ def configure(params):
     """Apply the strategy to the bot parameters. Call after the team has been loaded."""
     params.SELECTED = list(SOLO)
     params.HARD = params.BASE_HARD
+    params.GIFT_SEARCH = params.GIFTS[0]        # the start-of-run gift search keeps using the team's keyword
+    if (tables := gift_tables(params.BASE_HARD)):
+        params.GIFTS = tables
+    if (missing := missing_gift_icons(PTH, params.BASE_HARD)):
+        logging.warning(f"Rabbit Hole gift icons not found (those gifts are skipped and may get fused/sold): {missing}")
     params.PICK, params.PICK_ALL, params.IGNORE = pack_tables(params.BASE_HARD, params.PICK_ALL, params.IGNORE)
 
     mode = "MDH" if params.BASE_HARD else "MDN+RR"
