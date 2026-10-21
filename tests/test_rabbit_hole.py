@@ -66,6 +66,10 @@ class EgoPlanTests(unittest.TestCase):
         self.assertEqual(self.casts(6, True), [])
         self.assertEqual(self.casts(0, True), [])
 
+    def test_floors_1_to_3_overclock_and_4_5_awaken(self):
+        self.assertEqual([rh.ego_kind(l) for l in range(1, 6)], ["overclock"] * 3 + ["awakening"] * 2)
+        self.assertGreater(rh.OVERCLOCK_HOLD, 0)
+
     def test_heal_floors(self):
         self.assertEqual([l for l in range(1, 6) if rh.should_heal(l)], [4, 5])
 

@@ -153,8 +153,8 @@
   Enable **Rabbit Hole** in the config panel (next to *Discord Webhook* / *Arayashu*; the two modes are mutually exclusive).
   Based on the *MD Crates Farming Guide - Rabbit Hole* strategy (special thanks to @Cabric).
 
-  - Fields **Faust solo** and casts her **Hollow Faust EGO** (only equip that EGO): turn 1 of every fight on floors 1-3
-    (turns 1 and 2 on the floor 3 boss), turns 1 and 2 of the boss fights on floors 4-5.
+  - Fields **Faust solo** and casts her **Hollow Faust EGO** (only equip that EGO): Overclocked (press and hold) on turn 1 of every fight on floors 1-3
+    (turns 1 and 2 on the floor 3 boss), Awakened (plain click) on turns 1 and 2 of the boss fights on floors 4-5.
   - Follows the pack route **Flat-Broke Gamblers → Hell's Chicken → To Be Cleaved → Hatred and Despair → Line 2**
     (**S.E.A.** instead of To Be Cleaved on Hard MD). Your own priority list is only a fallback.
   - **Normal MD = MDN+RR**: starts on Normal and converts to Hard on floor 5. **Hard MD = full MDH route.**

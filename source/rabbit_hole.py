@@ -10,8 +10,8 @@ Summary of the strategy (MDN+RR route, Hard MD differences in brackets):
   * Pack route: Flatbroke Gamblers -> Hell's Chicken -> To Be Cleaved [S.E.A.]
                 -> Hatred and Despair -> Line 2.
   * MDN+RR starts on Normal and converts to Hard on floor 5; full MDH is Hard from floor 1.
-  * Floors 1-3: cast Hollow Faust's EGO on turn 1 of every fight (everything dies in one turn).
-  * Floors 4-5: cast it on turn 1 AND turn 2 of the boss fight (King of Despair / Sign of Roses).
+  * Floors 1-3: Overclock Hollow Faust's EGO (press and hold it) on turn 1 of every fight.
+  * Floors 4-5: Awaken it (plain click) on turn 1 AND turn 2 of the boss fight (King of Despair / Sign of Roses).
   * Floors 4-5 shop: heal Faust to 45 SP so she does not corrode.
   * Recommended graces: 1 3 (+ 4 on full MDH) and two Gift Searches.
 
@@ -100,6 +100,14 @@ def wants_ego(lvl, is_boss, turn):
     if lvl in (4, 5):
         return is_boss and turn in (1, 2)
     return False
+
+
+OVERCLOCK_HOLD = 1.5   # seconds the EGO is held to Overclock it (same hold the bot uses to open the EGO panel)
+
+
+def ego_kind(lvl):
+    """Floors 1-3 Overclock Hollow Faust (hold), floors 4-5 Awaken her (plain click)."""
+    return "overclock" if lvl <= 3 else "awakening"
 
 
 def should_heal(lvl):

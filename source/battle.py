@@ -64,7 +64,8 @@ def get_lowskill():
         coords_x.append(int(x))
     return sorted(coords_x)
 
-def ego_click(best_ego):
+def ego_click(best_ego, hold=0):
+    # hold > 0: press and hold the chosen EGO for that many seconds instead of clicking it (Overclock)
     gui.mouseDown()
     time.sleep(1.5)
     gui.mouseUp()
@@ -83,8 +84,14 @@ def ego_click(best_ego):
             print(i, res)
             if res:
                 c0, c1 = gui.center(res)
-                win_click(c0, int(c1 + 200))
-                win_click(c0, int(c1 + 200))
+                if hold:
+                    win_moveTo(c0, int(c1 + 200))
+                    gui.mouseDown()
+                    time.sleep(hold)
+                    gui.mouseUp()
+                else:
+                    win_click(c0, int(c1 + 200))
+                    win_click(c0, int(c1 + 200))
                 break
         else:
             win_click(1850, 1000)
@@ -372,9 +379,11 @@ def rabbit_ego(gear_start, turn):
     if not rabbit_hole.wants_ego(p.LVL, boss, turn):
         return False
     x, y = rabbit_hole.ego_slot(gear_start)
-    logging.info(f"Rabbit Hole: EGO on floor {p.LVL}, turn {turn}{' (boss)' if boss else ''}")
+    kind = rabbit_hole.ego_kind(p.LVL)
+    logging.info(f"Rabbit Hole: {kind} EGO on floor {p.LVL}, turn {turn}{' (boss)' if boss else ''}")
     win_moveTo(x, y)
-    ego_click([]) # empty favourites -> first EGO found, whatever its rarity
+    # empty favourites -> first EGO found, whatever its rarity; Overclock is a press-and-hold, Awakening a click
+    ego_click([], hold=rabbit_hole.OVERCLOCK_HOLD if kind == "overclock" else 0)
     return True
 
 
