@@ -45,18 +45,18 @@ GRACES = {False: (1, 3), True: (1, 3, 4)}   # 1-based grace numbers, keyed by "i
 HEAL_FLOORS = (4, 5)           # heal Faust to 45 SP in these shops
 FLOORS = range(1, 6)
 
-# Icons the gift handling needs. None of them ship with the bot: add a cropped inventory icon named
-# <name>.png anywhere under ImageAssets/UI (names must be unique; ImageAssets/UI/teams/<Keyword>/gifts/
-# is where the other gifts live). Gifts without an icon are simply skipped.
-#   name                 gift                                   used for
+# Existing icons the strategy's gifts are known by (files under ImageAssets/UI/teams/<Keyword>/gifts/)
+CONCEIT = "stone5"         # Fragment of Conceit (Poise, T4): fuse target, not upgraded
+DECAY = "stone4"           # Fragment of Decay (Sinking, T4): fuse target, not upgraded
+PUNCTURED = "piercememory" # Punctured Memory (Pierce, T4): Hard floor 4 fuse target, not upgraded
+
+# Icons that do not ship with the bot yet: add a cropped inventory icon named <name>.png anywhere under
+# ImageAssets/UI (names must be unique). Gifts without an icon are simply skipped.
 GIFT_ICONS = {
-    "fragmentofconceit":  "Fragment of Conceit (Poise, T4)",    # fuse target, not upgraded
-    "fragmentofdecay":    "Fragment of Decay (Sinking, T4)",    # fuse target, not upgraded
     "tornbandolier":      "Torn Bandolier (Pierce, T2)",        # MDN starting gift, upgraded on floor 1
-    "puncturedmemory":    "Punctured Memory (Pierce, T4)",      # Hard floor 4 fuse target, not upgraded
     "sharpneedlethread":  "Sharp Needle & Thread (T3)",         # only protected from fusing/selling
 }
-HARD_ONLY_ICONS = {"puncturedmemory"}
+HARD_ONLY_ICONS = set()
 FUSE_FLOORS = (3, 4)           # floors where the strategy fuses; Hard also fuses on floor 2
 
 
@@ -159,14 +159,14 @@ def gift_tables(hard, paths=PTH):
         return t
 
     tables = [
-        table("POISE", ["fragmentofconceit"], ["clearmirror"],
+        table("POISE", [CONCEIT], ["clearmirror"],
               protect=["holder", "stonetomb", "tornbandolier", "grandwelcome", "sharpneedlethread"],
-              buy=["fragmentofconceit", "clearmirror"],
+              buy=[CONCEIT, "clearmirror"],
               uptie1=[] if hard else ["tornbandolier"]),
-        table("SINKING", ["fragmentofdecay"], ["artisticsense"]),
+        table("SINKING", [DECAY], ["artisticsense"]),
     ]
     if hard:
-        tables.append(table("PIERCE", ["puncturedmemory"], []))
+        tables.append(table("PIERCE", [PUNCTURED], []))
     return [t for t in tables if t]
 
 

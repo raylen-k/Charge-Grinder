@@ -144,15 +144,22 @@ def fake_paths(*extra):
     return {**PTH, **{name: f"{name}.png" for name in extra}}
 
 
+def bare_paths():
+    """Only the icons that already ship, without any of the strategy's gifts."""
+    from source.utils.paths import PTH
+    drop = {"stone4", "stone5", "piercememory", "tornbandolier", "sharpneedlethread"}
+    return {k: v for k, v in PTH.items() if k not in drop}
+
+
 class GiftTests(unittest.TestCase):
-    ALL = ("fragmentofconceit", "fragmentofdecay", "tornbandolier", "puncturedmemory", "sharpneedlethread")
+    ALL = ("tornbandolier", "sharpneedlethread")
 
     def test_fusing_floors(self):
         self.assertEqual([l for l in range(1, 6) if rh.should_fuse(l, False)], [3, 4])
         self.assertEqual([l for l in range(1, 6) if rh.should_fuse(l, True)], [2, 3, 4])
 
     def test_without_new_icons_only_shipped_gifts_are_used(self):
-        tables = rh.gift_tables(False, fake_paths())
+        tables = rh.gift_tables(False, bare_paths())
         self.assertEqual([t["checks"][0] for t in tables], ["Poise", "Sinking"])
         self.assertEqual(list(tables[0]["uptie2"]), ["clearmirror"])
         self.assertEqual(list(tables[1]["uptie2"]), ["artisticsense"])
@@ -160,12 +167,12 @@ class GiftTests(unittest.TestCase):
 
     def test_full_mdn_tables(self):
         poise, sinking = rh.gift_tables(False, fake_paths(*self.ALL))
-        self.assertEqual(list(poise["uptie2"]), ["fragmentofconceit", "clearmirror"])  # Conceit is fused first
+        self.assertEqual(list(poise["uptie2"]), ["stone5", "clearmirror"])  # Conceit is fused first
         self.assertEqual(poise["fuse_ex"], {"clearmirror": 4})
         self.assertEqual(poise["uptie1"], {"tornbandolier": 2})
-        self.assertEqual(poise["skip_uptie"], ("fragmentofconceit",))
-        self.assertEqual(list(sinking["uptie2"]), ["fragmentofdecay", "artisticsense"])
-        self.assertEqual(sinking["skip_uptie"], ("fragmentofdecay",))
+        self.assertEqual(poise["skip_uptie"], ("stone5",))
+        self.assertEqual(list(sinking["uptie2"]), ["stone4", "artisticsense"])
+        self.assertEqual(sinking["skip_uptie"], ("stone4",))
         for t in (poise, sinking):
             self.assertEqual((t["goal"], t["fuse2"], t["fuse4"], t["sin"]), ([], {}, {}, True))
 
@@ -173,12 +180,12 @@ class GiftTests(unittest.TestCase):
         poise, sinking, pierce = rh.gift_tables(True, fake_paths(*self.ALL))
         self.assertEqual(poise["uptie1"], {})
         self.assertEqual(pierce["checks"][0], "Pierce")
-        self.assertEqual(list(pierce["uptie2"]), ["puncturedmemory"])
-        self.assertEqual(pierce["skip_uptie"], ("puncturedmemory",))
+        self.assertEqual(list(pierce["uptie2"]), ["piercememory"])
+        self.assertEqual(pierce["skip_uptie"], ("piercememory",))
 
     def test_pierce_dropped_until_its_icon_exists(self):
-        self.assertEqual(len(rh.gift_tables(True, fake_paths())), 2)
-        self.assertEqual(len(rh.gift_tables(True, fake_paths("puncturedmemory"))), 3)
+        self.assertEqual(len(rh.gift_tables(True, bare_paths())), 2)
+        self.assertEqual(len(rh.gift_tables(True, {**bare_paths(), "piercememory": "x.png"})), 3)
 
     def test_every_listed_gift_has_an_icon_when_present(self):
         for hard in (False, True):
@@ -201,8 +208,8 @@ class GiftTests(unittest.TestCase):
 
     def test_missing_icon_report(self):
         self.assertEqual(rh.missing_gift_icons(fake_paths(*self.ALL)), [])
-        self.assertIn("puncturedmemory", rh.missing_gift_icons(fake_paths(), hard=True))
-        self.assertNotIn("puncturedmemory", rh.missing_gift_icons(fake_paths(), hard=False))
+        self.assertEqual(rh.missing_gift_icons(bare_paths()), ["tornbandolier", "sharpneedlethread"])
+        self.assertEqual(rh.missing_gift_icons(bare_paths(), hard=True), ["tornbandolier", "sharpneedlethread"])
 
     def test_configure_swaps_gifts_but_keeps_the_gift_search_keyword(self):
         p = make_params()

@@ -167,16 +167,14 @@
   floor 3-4 shops (floor 2-4 on Hard); earlier shops only buy gifts you need and a visible tier 3. Grand Welcome and
   Sharp Needle & Thread are protected from being fused or sold.
 
-  **Icons you need to add.** The bot recognises gifts by screenshot, and a gift without an icon is skipped (and, if you own it, can be
-  fused or sold). Save a cropped inventory icon, same size/style as the others (about 90x90), as `<name>.png` anywhere under
-  `ImageAssets/UI` (the other gifts live in `ImageAssets/UI/teams/<Keyword>/gifts/`; names must be unique):
+  **Icons.** The bot recognises gifts by screenshot, and a gift without an icon is skipped (and, if you own it, can be fused or
+  sold). Fragment of Conceit (`stone5.png`), Fragment of Decay (`stone4.png`) and Punctured Memory (`piercememory.png`) already ship
+  with the bot. Two are still missing; save a cropped inventory icon (about 90x90, like the others) as `<name>.png` anywhere under
+  `ImageAssets/UI` (names must be unique):
 
   | File name | Gift |
   |---|---|
-  | `fragmentofconceit.png` | Fragment of Conceit |
-  | `fragmentofdecay.png` | Fragment of Decay |
   | `tornbandolier.png` | Torn Bandolier (MDN+RR starting gift) |
-  | `puncturedmemory.png` | Punctured Memory (Hard floor 4) |
   | `sharpneedlethread.png` | Sharp Needle & Thread (protection only) |
 
   **Not automated:** the shop's free refresh, extra meatshield sinners on Hard floor 4 / Faelantern, healing a skill checker on
