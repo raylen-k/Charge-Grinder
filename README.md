@@ -149,6 +149,23 @@
   
   <img src="ImageAssets/readme/ego.gif" width='100%' />
 
+- ## Rabbit Hole strategy (optional)
+  Enable **Rabbit Hole** in the config panel (next to *Discord Webhook* / *Arayashu*; the two modes are mutually exclusive).
+  Based on the *MD Crates Farming Guide - Rabbit Hole* strategy (special thanks to @Cabric).
+
+  - Fields **Faust solo** and casts her **Hollow Faust EGO** (only equip that EGO): turn 1 of every fight on floors 1-3
+    (turns 1 and 2 on the floor 3 boss), turns 1 and 2 of the boss fights on floors 4-5.
+  - Follows the pack route **Flat-Broke Gamblers → Hell's Chicken → To Be Cleaved → Hatred and Despair → Line 2**
+    (**S.E.A.** instead of To Be Cleaved on Hard MD). Your own priority list is only a fallback.
+  - **Normal MD = MDN+RR**: starts on Normal and converts to Hard on floor 5. **Hard MD = full MDH route.**
+  - Heals before leaving the floor 4 and 5 shops so Faust does not corrode.
+  - Recommended graces: **1 3** (+ **4** on Hard) and two Gift Searches. The bot warns in `game.log` if 1/3/4 are missing.
+
+  **Not automated yet:** strategy-specific gift buying/fusing (Torn Bandolier, Fragment of Conceit/Decay, Sharp Needle & Thread,
+  Punctured Memory... the bot uses the normal affinity gift logic, so pick a Poise/Sinking team), extra meatshield sinners on
+  Hard floor 4 / Faelantern, healing a skill checker on floor 1 and retrying a failed floor 4 boss turn-2 kill.
+  The strategy logic lives in `source/rabbit_hole.py`; run its tests with `python -m unittest discover -s tests -v`.
+
 - ## Fuses EGO gifts
 
   <img align="left" src="ImageAssets/readme/gifts.png" width="49%">

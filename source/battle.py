@@ -1,6 +1,7 @@
 from source.utils.utils import *
 from source.event import event
 import source.utils.params as p
+import source.rabbit_hole as rabbit_hole
 from itertools import product
 
 
@@ -361,6 +362,22 @@ def chain(gear_start, gear_end, background, is_defense=False):
 
 
 
+def rabbit_ego(gear_start, turn):
+    """Rabbit Hole: queue Hollow Faust's EGO on her first skill slot when the plan asks for it.
+
+    Faust is fielded solo with a single equipped EGO, so the generic EGO picker is enough.
+    Returns True if an EGO was queued (the turn must then be started without re-chaining skills).
+    """
+    boss = p.NODE == "Boss"
+    if not rabbit_hole.wants_ego(p.LVL, boss, turn):
+        return False
+    x, y = rabbit_hole.ego_slot(gear_start)
+    logging.info(f"Rabbit Hole: EGO on floor {p.LVL}, turn {turn}{' (boss)' if boss else ''}")
+    win_moveTo(x, y)
+    ego_click([]) # empty favourites -> first EGO found, whatever its rarity
+    return True
+
+
 def fight(lux=False):
     is_tobattle = now.button("TOBATTLE")
     is_battle   = now_rgb.button("winrate") or now.button("pause")
@@ -388,6 +405,7 @@ def fight(lux=False):
     last_error = 0
     attempts = 0
     defence_turns = 0
+    turn = 0 # finished planning phases (Rabbit Hole EGO plan)
     max_defense = 0
     if p.HOS_MODE and len(p.SELECTED) - p.DEAD != 1:
         max_defense = min(((len(p.SELECTED) - p.DEAD + int(p.DEAD == 0)) // 2), 5)
@@ -398,16 +416,23 @@ def fight(lux=False):
             time.sleep(0.1)
             ck = True
             is_focused = True
+            queued = False # EGO already queued for this turn
             try:
                 if p.HOS_MODE is False:
                     gear_start = gui.center(LocateEdges.try_locate(PTH["gear"], region=(0, 761, 900, 179), conf=0.7))
                     gear_end = gui.center(LocateEdges.try_locate(PTH["gear2"], region=(350, 730, 1570, 232), conf=0.7))
                     is_focused = False
                     # cv2.imwrite(f"data/battle_skills/{time.time()}.png", screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 150)))
-                    if lux or p.WINRATE: raise gui.ImageNotFoundException
-                    background = screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 10))
-                    # cv2.imwrite(f"data/battle_state/{time.time()}.png", screenshot(region=(round(gear_start[0] + 100 - 55), 775, round(gear_end[0] - gear_start[0] - 200 + 125), 305)))
-                    chain(gear_start, gear_end, background)
+                    if p.RABBIT_HOLE and not lux:
+                        queued = rabbit_ego(gear_start, turn + 1)
+                    if queued:
+                        gui.press("enter", 1, 0.1) # chain()/winrate would overwrite the EGO
+                        time.sleep(1)
+                    else:
+                        if lux or p.WINRATE: raise gui.ImageNotFoundException
+                        background = screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 10))
+                        # cv2.imwrite(f"data/battle_state/{time.time()}.png", screenshot(region=(round(gear_start[0] + 100 - 55), 775, round(gear_end[0] - gear_start[0] - 200 + 125), 305)))
+                        chain(gear_start, gear_end, background)
 
                 else:
                     if defence_turns < max_defense:
@@ -433,8 +458,9 @@ def fight(lux=False):
                 # success check
                 time.sleep(1)
                 if now.button("winrate"):
-                    gui.press("p", 1, 0.1)
-                    time.sleep(0.5)
+                    if not queued: # 'p' would re-pick every skill and drop the queued EGO
+                        gui.press("p", 1, 0.1)
+                        time.sleep(0.5)
                     gui.press("enter", 1, 0.1)
                     time.sleep(1)
             except gui.ImageNotFoundException:
@@ -449,6 +475,11 @@ def fight(lux=False):
                 if not lux and p.HARD: select_ego()
                 gui.press("enter", 1, 0.1)
                 time.sleep(1)
+
+            if p.RABBIT_HOLE and not lux:
+                time.sleep(0.5)
+                if not now_rgb.button("winrate"): # planning screen was left -> the turn started
+                    turn += 1
 
         if now_rgb.button("event"):
             ck = True

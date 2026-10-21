@@ -1,6 +1,7 @@
 from source.utils.utils import *
 from itertools import combinations_with_replacement
 import source.utils.params as p
+import source.rabbit_hole as rabbit_hole
 from source.teams import TEAMS
 from source_app.params import CACHE
 
@@ -1101,6 +1102,9 @@ def shop():
         time.sleep(0.1)
         for _ in range(1 + int(p.SUPER == "supershop")):
             buy_skill3()
+
+    if p.RABBIT_HOLE and rabbit_hole.should_heal(p.LVL):
+        heal_all() # Faust must not start the boss with corrosion
 
     time.sleep(0.1)
     leave()

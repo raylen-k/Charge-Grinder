@@ -26,6 +26,9 @@ EXTREME = False
 APP = None
 
 HOS_MODE = False
+RABBIT_HOLE = False  # Rabbit Hole strategy (source/rabbit_hole.py)
+BASE_HARD = False    # difficulty the run started with (Rabbit Hole flips HARD on floor 5)
+NODE = "Unknown"     # type of the node being entered ("Boss", "Normal", ...)
 
 PICK = {}
 IGNORE = {}

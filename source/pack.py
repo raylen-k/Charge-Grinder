@@ -1,4 +1,5 @@
 from source.utils.utils import *
+import source.rabbit_hole as rabbit_hole
 
 
 def within_region(x, regions):
@@ -149,6 +150,8 @@ def pack():
         return False
     print("pack check")
     p.LVL = update_lvl(p.LVL)
+    if rabbit_hole.convert_to_hard(p):
+        logging.info("Rabbit Hole: converting the run to Hard")
 
     if p.LVL == 6 or p.LVL == 11: time.sleep(2) # animation
 

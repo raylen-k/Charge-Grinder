@@ -1050,6 +1050,8 @@ class WebhookLogHandler(logging.Handler):
             self._add_field(fields, "Focus", self._focus_label(self.context["team"]))
             self._add_field(fields, "Difficulty", self.context["difficulty"])
             self._add_field(fields, "Arayashu", "Active" if p.HOS_MODE else "Inactive")
+            if p.RABBIT_HOLE:
+                self._add_field(fields, "Rabbit Hole", "MDH" if p.BASE_HARD else "MDN+RR")
 
             if not self.compact_mode:
                 if event_floor is not None:

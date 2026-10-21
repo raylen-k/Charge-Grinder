@@ -206,6 +206,7 @@ def move():
         time.sleep(0.2)
     
     print("move check")
+    p.NODE = "Unknown"
     # run fail detection
     p.DEAD = len([gui.center(box) for box in LocateRGB.locate_all(PTH["0"], region=REG["alldead"], conf=0.9, threshold=40)])
     print(f"{p.DEAD} dead sinners")
@@ -254,6 +255,7 @@ def move():
         region = regions[region_idx]
         _loc = LocatePreset(image=screenshot(region=region), v_comp=v_list[region_idx], conf=0.8, wait=False)
         name = get_node_name(_loc, region)
+        p.NODE = name
         key_name = keys_map.get(region_idx, "d")
 
         if input_with_fallback(key_name, lambda: win_click(gui.center(region)), enter):
@@ -314,6 +316,7 @@ def move():
         print(nodes)
         id, name = next_step(nodes, inter_connect)
         if not id is None:
+            p.NODE = name
             key_name = keys_map.get(int(id-adjust), "d")
             region = regions[id]
             if input_with_fallback(key_name, lambda: win_click(gui.center(region)), enter):

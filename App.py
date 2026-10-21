@@ -288,7 +288,13 @@ class MyApp(QWidget):
             return field
 
         add_button("webhook_open", "Discord Webhook", self.config, (44, 82, 192, 28), 13, self.toggle_webhook_panel)
-        add_button("hos_mode", "Arayashu", self.config, (244, 82, 192, 28), 13, self.update_button_icons, checkable=True)
+        add_button("hos_mode", "Arayashu", self.config, (244, 82, 192, 28), 13, self.on_hos_toggled, checkable=True)
+        add_button("rabbit_hole", "Rabbit Hole", self.config, (444, 82, 192, 28), 13, self.on_rabbit_toggled, checkable=True)
+        self.rabbit_hole.setToolTip(
+            "Rabbit Hole strategy: Faust solo with Hollow Faust EGO.\n"
+            "Normal MD = MDN+RR route (converts to Hard on floor 5), Hard MD = full MDH route.\n"
+            "Recommended graces: 1 3 (+4 on Hard) and two Gift Searches."
+        )
 
         self.webhook_panel = QFrame(self.config)
         self.webhook_panel.setGeometry(24, 104, 652, 560)
@@ -889,6 +895,7 @@ class MyApp(QWidget):
                 self.buttons[f"team{i}"].setIcon(QIcon())
 
     def set_extra(self):
+        self.rabbit_hole.setChecked(self.sm.get_rabbit_hole())
         state = self.sm.get_extra()
         if not state: return
 
@@ -919,6 +926,7 @@ class MyApp(QWidget):
             extra.append(self.buttons[f"on{i + 7}"].isChecked())
         extra.append(self.hos_mode.isChecked())
         self.sm.set_extra(extra)
+        self.sm.set_rabbit_hole(self.rabbit_hole.isChecked())
         self.sync_webhook_settings(show_message=False)
         self.sm.save_settings()
 
@@ -1495,6 +1503,15 @@ class MyApp(QWidget):
             sender.setIcon(QIcon())
         sender.setIconSize(sender.size())
 
+    def on_hos_toggled(self):
+        self.update_button_icons()
+        if self.hos_mode.isChecked():
+            self.rabbit_hole.setChecked(False) # the two modes are mutually exclusive
+
+    def on_rabbit_toggled(self):
+        if self.rabbit_hole.isChecked():
+            self.hos_mode.setChecked(False)
+
     def update_ego_icons(self):
         sender = self.sender()
         if not sender or not isinstance(sender, QPushButton):
@@ -1757,6 +1774,7 @@ class MyApp(QWidget):
             'winrate'    : self.hard or self.buttons['on6'].isChecked() if not p.HOS_MODE else self.buttons['on6'].isChecked(), # Thanks to @zombpr for finding this
             'infinity'   : self.hard and self.buttons['on6'].isChecked(),
             'hos_mode'   : self.hos_mode.isChecked(),
+            'rabbit_hole': self.rabbit_hole.isChecked(),
             'buff'       : [getattr(self.buttons[f'buff{i}'], 'config', {}).get('state', 0) for i in range(10)],
             'card'       : self.get_cards(),
             'keywordless': {Bot.WORDLESS[id]['name']: state for id, state in self.keywordless.items()}

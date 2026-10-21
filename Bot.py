@@ -10,6 +10,7 @@ from source.shop import shop
 from source.lux import grind_lux, check_enkephalin
 from source.teams import TEAMS, HARD
 import source.utils.params as p
+import source.rabbit_hole as rabbit_hole
 
 
 # Action          -> next action is verifier
@@ -244,6 +245,7 @@ def main_loop():
     ck = False
     p.MOVE_ANIMATION = False
     p.LVL = 1
+    p.NODE = "Unknown"
     while True:
         wait_while_condition(lambda: now.button("connecting"), timer=60)
         if now.button("ServerError"):
@@ -307,6 +309,7 @@ def main_loop():
                     error = 0
                     last_error = 0
                     p.LVL = 1
+                    rabbit_hole.reset_difficulty(p)
                     break
             else:
                 # check if end
@@ -354,6 +357,7 @@ def set_team(team, teams, keywordless):
     p.PICK = generate_packs_pr(teams[team]["priority"])
     p.IGNORE = generate_packs_av(teams[team]["avoid"])
     p.PICK_ALL = generate_packs_all(teams[team]["priority"])
+    if p.RABBIT_HOLE: rabbit_hole.configure(p)
     print(p.PICK, p.IGNORE, p.PICK_ALL)
 
     logging.info(f'Team: {p.TEAM[0]}')
@@ -386,6 +390,8 @@ def execute_me(count, count_exp, count_thd, teams, settings, hard, app, warning)
     p.WINRATE = settings['winrate']
     p.HOS_MODE = settings['hos_mode']
     p.EXTREME = settings['infinity']
+    p.BASE_HARD = hard
+    p.RABBIT_HOLE = rabbit_hole.is_enabled(settings.get('rabbit_hole', False), p.HOS_MODE, p.EXTREME)
     p.APP = app
     p.WARNING = warning
 
@@ -418,6 +424,7 @@ def execute_me(count, count_exp, count_thd, teams, settings, hard, app, warning)
 
                 completed = False
                 while not completed:
+                    rabbit_hole.reset_difficulty(p) # floor 5 of MDN+RR flips HARD
                     set_team(team, teams, keywordless)
                     completed = main_loop()
                     if p.NETZACH: check_enkephalin()

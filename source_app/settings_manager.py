@@ -126,6 +126,12 @@ class SettingsManager(QObject):
     def set_extra(self, state):
         self.data["EXTRA"] = state
 
+    def get_rabbit_hole(self):
+        return self.data.get("RABBIT_HOLE", False) is True
+
+    def set_rabbit_hole(self, enabled):
+        self.data["RABBIT_HOLE"] = bool(enabled)
+
     def set_aff(self, state):
         self.data["AFFINITY"] = state
 
@@ -155,7 +161,7 @@ class SettingsManager(QObject):
     
     def verify_file_data(self, data):
         corrupted_data = set()
-        main_entries = {"CONFIG", "HARD", "TEAMS", "AFFINITY", "EXTRA", "WEBHOOK"}
+        main_entries = {"CONFIG", "HARD", "TEAMS", "AFFINITY", "EXTRA", "WEBHOOK", "RABBIT_HOLE"}
         data = self.clean_entries(data, main_entries)
 
         configs = set(data.keys()) & {"CONFIG", "HARD"}
@@ -273,6 +279,10 @@ class SettingsManager(QObject):
                         del data[config][key]
                         continue
         
+        if "RABBIT_HOLE" in data and not isinstance(data["RABBIT_HOLE"], bool):
+            corrupted_data.add("Rabbit Hole toggle")
+            del data["RABBIT_HOLE"]
+
         if "TEAMS" not in data: pass
         elif not isinstance(data["TEAMS"], dict):
             corrupted_data.add("sinner selections")
